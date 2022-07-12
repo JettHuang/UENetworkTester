@@ -6,7 +6,8 @@
 #include "Input/Reply.h"
 #include "Widgets/DeclarativeSyntaxSupport.h"
 #include "Widgets/SCompoundWidget.h"
-
+#include "Widgets/Input/SMultiLineEditableTextBox.h"
+#include "MinimalClient.h"
 
 /* Implements the server operating window. */
 class SServerWidget : public SCompoundWidget
@@ -57,6 +58,11 @@ protected:
 	bool GetIsSendMessageEnabled() const;
 
 protected:
+	TSharedPtr<SMultiLineEditableTextBox>  SendBox;
+
 	FString IpAddress;
 	uint16	IpPort;
+
+	bool IsListening;
+	UMinimalClient* MinimalServer;
 };

@@ -17,7 +17,7 @@ public class NetworkTester : ModuleRules
 		
 		PrivateIncludePaths.AddRange(
 			new string[] {
-				// ... add other private include paths required here ...
+				"NetworkTester/Core"
 			}
 			);
 			
@@ -26,8 +26,10 @@ public class NetworkTester : ModuleRules
 			new string[]
 			{
 				"Core",
-				// ... add other public dependencies that you statically link with here ...
-			}
+                "CoreUObject",
+                "Engine",
+                "Sockets"
+            }
 			);
 			
 		
@@ -43,7 +45,8 @@ public class NetworkTester : ModuleRules
 				"Engine",
 				"Slate",
 				"SlateCore",
-				// ... add private dependencies that you statically link with here ...	
+				"PacketHandler",
+				"NetCore"
 			}
 			);
 		

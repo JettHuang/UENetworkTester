@@ -23,13 +23,18 @@
 SClientWidget::SClientWidget()
 	: IpAddress(TEXT("127.0.0.1"))
 	, IpPort(7777)
+	, IsConnected(false)
 {
-
+	MinimalClient = NewObject<UMinimalClient>();
+	MinimalClient->AddToRoot();
 }
 
 SClientWidget::~SClientWidget()
 {
-
+	if (MinimalClient) {
+		MinimalClient->RemoveFromRoot();
+		MinimalClient = NULL;
+	}
 }
 
 void SClientWidget::Construct(const FArguments& InArgs)
@@ -124,7 +129,7 @@ void SClientWidget::Construct(const FArguments& InArgs)
 				+ SVerticalBox::Slot()
 				.FillHeight(1.f)
 				[
-					SNew(SMultiLineEditableTextBox)
+					SAssignNew(SendBox, SMultiLineEditableTextBox)
 					.IsReadOnly(false)
 				]
 				+ SVerticalBox::Slot()
@@ -184,11 +189,20 @@ void SClientWidget::OnPortValueCommitted(uint16 InPort, ETextCommit::Type Commit
 
 FText SClientWidget::GetConnectButtonText() const
 {
-	return LOCTEXT("NetworkTester_ConnectStart", "Connect");
+	return IsConnected ? LOCTEXT("NetworkTester_ConnectStop", "Disconnect") : LOCTEXT("NetworkTester_ConnectStart", "Connect");
 }
 
 FReply SClientWidget::OnConnectClicked()
 {
+	if (IsConnected) {
+		MinimalClient->Cleanup();
+		IsConnected = false;
+	}
+	else {
+		MinimalClient->Connect(IpAddress, IpPort);
+		IsConnected = true;
+	}
+
 	return FReply::Handled();
 }
 
@@ -217,6 +231,20 @@ bool SClientWidget::GetIsTickStepEnabled() const
 // send message button
 FReply SClientWidget::OnSendMessageClicked()
 {
+	FString Str;
+
+	if (SendBox)
+	{
+		FText Text = SendBox->GetText();
+		Str = Text.ToString();
+
+		SendBox->SetText(FText());
+	}
+	if (MinimalClient && Str.Len() > 0)
+	{
+		MinimalClient->SendText(Str);
+	}
+
 	return FReply::Handled();
 }
 

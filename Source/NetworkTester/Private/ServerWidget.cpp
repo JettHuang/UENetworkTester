@@ -23,13 +23,18 @@
 SServerWidget::SServerWidget()
 	: IpAddress(TEXT("127.0.0.1"))
 	, IpPort(7777)
+	, IsListening(false)
 {
-
+	MinimalServer = NewObject<UMinimalClient>();
+	MinimalServer->AddToRoot();
 }
 
 SServerWidget::~SServerWidget()
 {
-
+	if (MinimalServer) {
+		MinimalServer->RemoveFromRoot();
+		MinimalServer = NULL;
+	}
 }
 
 void SServerWidget::Construct(const FArguments& InArgs)
@@ -124,7 +129,7 @@ void SServerWidget::Construct(const FArguments& InArgs)
 				+ SVerticalBox::Slot()
 				.FillHeight(1.f)
 				[
-					SNew(SMultiLineEditableTextBox)
+					SAssignNew(SendBox, SMultiLineEditableTextBox)
 					.IsReadOnly(false)
 				]
 				+ SVerticalBox::Slot()
@@ -184,11 +189,20 @@ void SServerWidget::OnPortValueCommitted(uint16 InPort, ETextCommit::Type Commit
 
 FText SServerWidget::GetListenButtonText() const
 {
-	return LOCTEXT("NetworkTester_ListenStart", "Listen");
+	return IsListening ? LOCTEXT("NetworkTester_ListenStop", "Stop") : LOCTEXT("NetworkTester_ListenStart", "Listen");
 }
 
 FReply SServerWidget::OnListenClicked()
 {
+	if (IsListening) {
+		MinimalServer->Cleanup();
+		IsListening = false;
+	}
+	else {
+		MinimalServer->Listen(IpAddress, IpPort);
+		IsListening = true;
+	}
+
 	return FReply::Handled();
 }
 
@@ -217,6 +231,20 @@ bool SServerWidget::GetIsTickStepEnabled() const
 // send message button
 FReply SServerWidget::OnSendMessageClicked()
 {
+	FString Str;
+
+	if (SendBox)
+	{
+		FText Text = SendBox->GetText();
+		Str = Text.ToString();
+
+		SendBox->SetText(FText());
+	}
+	if (MinimalServer && Str.Len() > 0)
+	{
+		MinimalServer->SendText(Str);
+	}
+
 	return FReply::Handled();
 }
 
