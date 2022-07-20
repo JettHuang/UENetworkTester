@@ -27,11 +27,14 @@ SClientWidget::SClientWidget()
 {
 	MinimalClient = NewObject<UMinimalClient>();
 	MinimalClient->AddToRoot();
+
+	DelegateHandle = MinimalClient->ReceiveMessageDel.AddRaw(this, &SClientWidget::OnReceiveMessage);
 }
 
 SClientWidget::~SClientWidget()
 {
 	if (MinimalClient) {
+		MinimalClient->ReceiveMessageDel.Remove(DelegateHandle);
 		MinimalClient->RemoveFromRoot();
 		MinimalClient = NULL;
 	}
@@ -119,8 +122,8 @@ void SClientWidget::Construct(const FArguments& InArgs)
 			+ SSplitter::Slot()
 			.Value(0.5f)
 			[
-				SNew(SMultiLineEditableTextBox)
-				.IsReadOnly(true)
+				SAssignNew(HistoryBox, SMultiLineEditableTextBox)
+				.IsReadOnly(false)
 			]
 			+ SSplitter::Slot()
 			.Value(0.5f)
@@ -251,6 +254,14 @@ FReply SClientWidget::OnSendMessageClicked()
 bool SClientWidget::GetIsSendMessageEnabled() const
 {
 	return true;
+}
+
+void SClientWidget::OnReceiveMessage(const FString& InText, class UNetConnection* InConnection)
+{
+	if (HistoryBox)
+	{
+		HistoryBox->InsertTextAtCursor(InText);
+	}
 }
 
 #undef LOCTEXT_NAMESPACE

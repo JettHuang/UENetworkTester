@@ -27,11 +27,13 @@ SServerWidget::SServerWidget()
 {
 	MinimalServer = NewObject<UMinimalClient>();
 	MinimalServer->AddToRoot();
+	DelegateHandle = MinimalServer->ReceiveMessageDel.AddRaw(this, &SServerWidget::OnReceiveMessage);
 }
 
 SServerWidget::~SServerWidget()
 {
 	if (MinimalServer) {
+		MinimalServer->ReceiveMessageDel.Remove(DelegateHandle);
 		MinimalServer->RemoveFromRoot();
 		MinimalServer = NULL;
 	}
@@ -119,8 +121,8 @@ void SServerWidget::Construct(const FArguments& InArgs)
 			+ SSplitter::Slot()
 			.Value(0.5f)
 			[
-				SNew(SMultiLineEditableTextBox)
-				.IsReadOnly(true)
+				SAssignNew(HistoryBox, SMultiLineEditableTextBox)
+				.IsReadOnly(false)
 			]
 			+ SSplitter::Slot()
 			.Value(0.5f)
@@ -251,6 +253,14 @@ FReply SServerWidget::OnSendMessageClicked()
 bool SServerWidget::GetIsSendMessageEnabled() const
 {
 	return true;
+}
+
+void SServerWidget::OnReceiveMessage(const FString& InText, class UNetConnection* InConnection)
+{
+	if (HistoryBox)
+	{
+		HistoryBox->InsertTextAtCursor(InText);
+	}
 }
 
 #undef LOCTEXT_NAMESPACE

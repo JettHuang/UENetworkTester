@@ -57,7 +57,9 @@ protected:
 
 	bool GetIsSendMessageEnabled() const;
 
+	void OnReceiveMessage(const FString& InText, class UNetConnection* InConnection);
 protected:
+	TSharedPtr<SMultiLineEditableTextBox>  HistoryBox;
 	TSharedPtr<SMultiLineEditableTextBox>  SendBox;
 
 	FString IpAddress;
@@ -65,4 +67,6 @@ protected:
 
 	bool IsListening;
 	UMinimalClient* MinimalServer;
+
+	FDelegateHandle DelegateHandle;
 };

@@ -14,6 +14,7 @@
 #include "MyActorChannel.h"
 #include "MyChatChannel.h"
 #include "MyPackageMap.h"
+#include "MyConnection.h"
 
 
 DEFINE_LOG_CATEGORY(LogNetworkTester);
@@ -63,6 +64,10 @@ bool UMinimalClient::Listen(const FString& InServerAddr, uint16 InPort)
 	// Hack: Replace the control and actor channels, with stripped down unit test channels
 	UnitNetDriver->ChannelDefinitionMap[NAME_Actor].ChannelClass = UMyActorChannel::StaticClass();
 	UnitNetDriver->ChannelDefinitionMap[NAME_Voice].ChannelClass = UMyChatChannel::StaticClass();
+	UnitNetDriver->ChannelDefinitionMap[NAME_Voice].bInitialServer = true;
+	UnitNetDriver->ChannelDefinitionMap[NAME_Voice].bServerOpen = true;
+	UnitNetDriver->ChannelDefinitionMap[NAME_Voice].bInitialClient = true;
+	UnitNetDriver->ChannelDefinitionMap[NAME_Voice].bClientOpen = true;
 
 	UnitNetDriver->InitialConnectTimeout = FMath::Max(UnitNetDriver->InitialConnectTimeout, (float)Timeout);
 	UnitNetDriver->ConnectionTimeout = FMath::Max(UnitNetDriver->ConnectionTimeout, (float)Timeout);
@@ -96,7 +101,11 @@ bool UMinimalClient::Connect(const FString& InServerAddr, uint16 InPort)
 	// Hack: Replace the control and actor channels, with stripped down unit test channels
 	UnitNetDriver->ChannelDefinitionMap[NAME_Actor].ChannelClass = UMyActorChannel::StaticClass();
 	UnitNetDriver->ChannelDefinitionMap[NAME_Voice].ChannelClass = UMyChatChannel::StaticClass();
-	
+	UnitNetDriver->ChannelDefinitionMap[NAME_Voice].bInitialServer = true;
+	UnitNetDriver->ChannelDefinitionMap[NAME_Voice].bServerOpen = true;
+	UnitNetDriver->ChannelDefinitionMap[NAME_Voice].bInitialClient = true;
+	UnitNetDriver->ChannelDefinitionMap[NAME_Voice].bClientOpen = true;
+
 	UnitNetDriver->InitialConnectTimeout = FMath::Max(UnitNetDriver->InitialConnectTimeout, (float)Timeout);
 	UnitNetDriver->ConnectionTimeout = FMath::Max(UnitNetDriver->ConnectionTimeout, (float)Timeout);
 
@@ -136,6 +145,11 @@ bool UMinimalClient::Connect(const FString& InServerAddr, uint16 InPort)
 	if (bSuccess)
 	{
 		UNetConnection *UnitConn = UnitNetDriver->ServerConnection;
+		UMyConnection* MyConnection = Cast<UMyConnection>(UnitConn);
+
+		if (MyConnection) {
+			MyConnection->MinClient = this;
+		}
 
 		check(UnitConn != nullptr);
 		check(UnitConn->PackageMapClass == UMyPackageMapClient::StaticClass());
@@ -153,8 +167,6 @@ bool UMinimalClient::Connect(const FString& InServerAddr, uint16 InPort)
 
 		int ChannelIndex = UnitNetDriver->ChannelDefinitionMap[NAME_Voice].StaticChannelIndex;
 		UMyChatChannel* UnitChatChan = CastChecked<UMyChatChannel>(UnitConn->Channels[ChannelIndex]);
-
-		UnitChatChan->MinClient = this;
 
 		if (UnitConn->Handler.IsValid())
 		{
@@ -223,6 +235,11 @@ void UMinimalClient::Cleanup()
 
 void UMinimalClient::SendText(FString& InText)
 {
+	if (!UnitNetDriver)
+	{
+		return;
+	}
+
 	int ChannelIndex = UnitNetDriver->ChannelDefinitionMap[NAME_Voice].StaticChannelIndex;
 
 	if (UnitNetDriver->ServerConnection)
@@ -248,6 +265,15 @@ void UMinimalClient::SendText(FString& InText)
 
 			UnitConn->FlushNet();
 		}
+	}
+}
+
+void UMinimalClient::NotifyAcceptedConnection(UNetConnection* Connection)
+{
+	UMyConnection* MyConnection = Cast<UMyConnection>(Connection);
+	if (MyConnection)
+	{
+		MyConnection->MinClient = this;
 	}
 }
 
@@ -356,7 +382,7 @@ UNetDriver* UMinimalClient::CreateNetDriver()
 			UnitWorld->SetNetDriver(ReturnVal);
 
 			ReturnVal->InitConnectionClass();
-
+			ReturnVal->NetConnectionClass = UMyConnection::StaticClass();
 
 			FLevelCollection* Collection = (FLevelCollection*)UnitWorld->GetActiveLevelCollection();
 

@@ -3,12 +3,12 @@
 
 #include "MyChatChannel.h"
 #include "Engine/NetConnection.h"
+#include "MyConnection.h"
 #include "MinimalClient.h"
 
 
 UMyChatChannel::UMyChatChannel(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
-	, MinClient(nullptr)
 	, bVerifyOpen(false)
 {
 	ChName = NAME_Voice;
@@ -26,6 +26,12 @@ void UMyChatChannel::ReceivedBunch(FInBunch& Bunch)
 	Bunch << Text;
 	
 	UE_LOG(LogNet, Warning, TEXT("UMyChannel::ReceivedBunch: %s\n"), *Text);
+
+	UMyConnection* MyConnection = Cast<UMyConnection>(Connection);
+	if (MyConnection && MyConnection->MinClient)
+	{
+		MyConnection->MinClient->ReceiveMessageDel.Broadcast(Text, Connection);
+	}
 }
 
 void UMyChatChannel::Tick()

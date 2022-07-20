@@ -46,7 +46,8 @@ public class NetworkTester : ModuleRules
 				"Slate",
 				"SlateCore",
 				"PacketHandler",
-				"NetCore"
+				"NetCore",
+				"OnlineSubsystemUtils"
 			}
 			);
 		

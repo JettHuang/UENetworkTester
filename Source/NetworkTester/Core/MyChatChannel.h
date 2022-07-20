@@ -30,9 +30,6 @@ class UMyChatChannel : public UChannel
 	virtual void Tick() override;
 
 public:
-	/** The minimal client which may require received bunch notifications */
-	UMinimalClient* MinClient;
-
 	/** Whether or not this channel should verify it has been opened (resends initial packets until acked, like control channel) */
 	bool bVerifyOpen;
 };

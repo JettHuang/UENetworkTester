@@ -76,6 +76,9 @@ DECLARE_DELEGATE_TwoParams(FOnHandleClientPlayer, APlayerController* /*PC*/, UNe
  */
 DECLARE_DELEGATE(FOnRPCFailure);
 
+/* on message delegate */
+DECLARE_MULTICAST_DELEGATE_TwoParams(FOnReceiveMessage, const FString &InText, UNetConnection* /*Connection*/);
+
 
 // base class for implementing a bare bones/stripped-down game client or listened server.
 UCLASS()
@@ -112,6 +115,7 @@ public:
 
 	void SendText(FString& InText);
 
+	FOnReceiveMessage  ReceiveMessageDel;
 protected:
 	// create world
 	UWorld* CreateWorld();
@@ -128,9 +132,7 @@ protected:
 		return EAcceptConnection::Accept;
 	}
 
-	virtual void NotifyAcceptedConnection(UNetConnection* Connection) override
-	{
-	}
+	virtual void NotifyAcceptedConnection(UNetConnection* Connection) override;
 
 	virtual bool NotifyAcceptingChannel(UChannel* Channel) override;
 
